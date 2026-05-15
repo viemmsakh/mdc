@@ -1,10 +1,16 @@
 use anyhow::{Context, Ok, Result, anyhow};
+use ironpress::html_to_pdf;
 use pulldown_cmark::{html, Options, Parser as MarkdownParser};
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::OUTPUTS;
 use crate::structs::RenderOptions;
+
+pub fn convert_html_to_pdf(html: String) -> Result<Vec<u8>> {
+    let pdf = html_to_pdf(&html)?;
+    Ok(pdf)
+}
 
 pub fn convert_markdown_to_html(markdown: String) -> Result<String> {
     let mut options = Options::empty();
@@ -16,6 +22,14 @@ pub fn convert_markdown_to_html(markdown: String) -> Result<String> {
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
     Ok(html_output)
+}
+
+pub fn create_output_path_if_not_exist(path: &Path) -> Result<()>{
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("Failed to create directory structure for {:?}", parent))?;
+    }
+    Ok(())
 }
 
 pub fn indent_html(html: String) -> String {
@@ -48,9 +62,23 @@ pub fn render(input_path: PathBuf, output_path: Option<PathBuf>, options: Render
 
         
     match options.output {
-        OUTPUTS::FILE => {
+        OUTPUTS::HTML => {
             if let Some(path) = output_path {
+                let mut path = path;
+                if path.extension().is_none() {
+                    path.set_extension("html");
+                }
                 write_html_to_file(path, final_html)?;
+                return Ok(());
+            }
+        },
+        OUTPUTS::PDF => {
+            if let Some(path) = output_path {
+                let mut path = path;
+                if path.extension().is_none() {
+                    path.set_extension("pdf");
+                }
+                write_html_to_pdf_file(path, final_html)?;
                 return Ok(());
             }
         },
@@ -102,15 +130,22 @@ pub fn wrap_in_html_boilerplate(html_content: String, live: bool) -> String {
 }
 
 pub fn write_html_to_file(path: PathBuf, html_content: String) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("Failed to create directory structure for {:?}", parent))?;
-    }
+    create_output_path_if_not_exist(&path).ok();
 
     fs::write(&path, html_content)
         .with_context(|| format!("Failed to write HTML output to {:?}", path))?;
 
     println!("HTML output successfully written to {:?}", path);
+    Ok(())
+}
+
+pub fn write_html_to_pdf_file(path: PathBuf, html_content: String) -> Result<()> {
+    let pdf = convert_html_to_pdf(html_content)?;
+    fs::write(&path, pdf)
+        .with_context(|| format!("Failed to write PDF output to {:?}", path))?;
+    
+    
+    println!("PDF output successfully written to {:?}", path);
     Ok(())
 }
 

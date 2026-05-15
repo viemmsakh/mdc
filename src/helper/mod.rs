@@ -102,8 +102,15 @@ pub fn wrap_in_html_boilerplate(html_content: String, live: bool) -> String {
 }
 
 pub fn write_html_to_file(path: PathBuf, html_content: String) -> Result<()> {
-    fs::write(&path, html_content).with_context(|| format!("Failed to write HTML output to {:?}", path))?;
-    println!("HTML output successfully written to file.");
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("Failed to create directory structure for {:?}", parent))?;
+    }
+
+    fs::write(&path, html_content)
+        .with_context(|| format!("Failed to write HTML output to {:?}", path))?;
+
+    println!("HTML output successfully written to {:?}", path);
     Ok(())
 }
 

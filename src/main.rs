@@ -1,7 +1,3 @@
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::convert::Infallible;
-
 use anyhow::Result;
 use axum::{
     response::sse::{Event as SseEvent, Sse},
@@ -11,6 +7,10 @@ use axum::{
 use clap::{Parser,CommandFactory};
 use notify::{recommended_watcher, Watcher, RecursiveMode, Event};
 use std::env;
+use std::ffi::OsStr;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::convert::Infallible;
 use tokio::signal;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
@@ -24,7 +24,8 @@ use structs::RenderOptions;
 
 #[derive(Clone, Copy)]
 pub enum OUTPUTS {
-    FILE,
+    HTML,
+    PDF,
     STDOUT,
 }
 
@@ -42,12 +43,27 @@ async fn main() -> Result<()> {
         println!("WARNING: The --port flag is only used in --live mode and will be ignored.\n");
     }
 
+    if args.pdf && !args.output.is_some() {
+        println!("ERROR: The --pdf flag requires the --output flag.\n");
+        Args::command().print_help()?;
+        println!();
+        return Ok(());
+    }
+
+    if args.live && args.pdf {
+        println!("WARNING: The --live and --pdf flags are not compatible. Rendering as HTML.\n");
+        Args::command().print_help()?;
+        println!();
+        return Ok(());
+    }
+
     let live = args.live;
     let input_path = helper::validate_input_file(&args.input)?;
 
     if !live {
         let output_type = if args.output.is_some() {
-            OUTPUTS::FILE
+            let is_pdf = args.pdf;
+            if is_pdf { OUTPUTS::PDF } else { OUTPUTS::HTML }
         } else {
             OUTPUTS::STDOUT
         };
@@ -66,7 +82,18 @@ async fn main() -> Result<()> {
         };
         let addr = format!("0.0.0.0:{}", port);
         let output_path = match args.output.as_ref() {
-            Some(path) => path.clone(),
+            Some(path) => {
+                let mut path = path.clone();
+                if path.extension().is_none() {
+                    path.set_extension("html");
+                } else if path.extension() != Some(OsStr::new("html")) {
+                    if let Some(ext) = path.extension() {
+                        println!("WARNING: --output provided '{}' extension, using 'html' instead.", ext.to_string_lossy());
+                    }
+                    path.set_extension("html");
+                }
+                path
+            },
             None => Path::new("__live__.html").to_path_buf(),
         };
 
@@ -76,7 +103,7 @@ async fn main() -> Result<()> {
         let options = RenderOptions {
             boilerplate: true,
             live: true,
-            output: OUTPUTS::FILE
+            output: OUTPUTS::HTML
         };
 
         let (tx, _rx) = broadcast::channel::<()>(16);

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Export</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    </style>
+</head>
+<body>
+    <h1>Markdown to HTML Converter</h1>
+    <p>A CLI Tool written in Rust that converts Markdown files into styled HTML or PDF documents. Features a live-reloading mode "--live" with a built-in web server for real-time previews.</p>
+    <h2>Installation</h2>
+    <ol>
+    <li>
+    <p><strong>Clone the repository</strong>:</p>
+    <pre><code class="language-bash">git clone https://github.com/viemmsakh/mdc.git
+    cd mdc
+    </code></pre>
+    </li>
+    <li>
+    <p><strong>Build with Cargo</strong></p>
+    <pre><code class="language-bash">cargo build --release
+    </code></pre>
+    </li>
+    </ol>
+    <h2>Usage</h2>
+    <p>Run the progam without arguments to see the help screen</p>
+    <p><strong>Basic Conversion</strong>
+    <em>Outputs a raw HTML snippet to the terminal:</em></p>
+    <pre><code class="language-bash">./mdc --input README.md
+    </code></pre>
+    <p><strong>Save to File with Styling</strong>
+    <em>Wraps the content in a full HTML document and saves it to a specific path, infers exension if not given:</em></p>
+    <pre><code class="language-bash">./mdc --input README.md --output test/readme --html
+    </code></pre>
+    <p><strong>Save to PDF</strong>
+    <em>Generates a PDF and saves it to a specific path, infers exension if not given:</em></p>
+    <pre><code class="language-bash">./mdc --input README.md --output test/readme --pdf
+    </code></pre>
+    <p><strong>Live Preview</strong>
+    <em>Starts a local server and watches for file changes. Everytime you save your markdown file, the browsers at <code>http://0.0.0.0:3000</code> will refresh instantly:</em></p>
+    <pre><code class="language-bash">./mdc --input README.md --live
+    </code></pre>
+    <h2>Command Line Arguments</h2>
+    <table><thead><tr><th>Flag</th><th>Short</th><th>Description</th></tr></thead><tbody>
+    <tr><td><code>--input</code></td><td><code>-i</code></td><td><strong>Required.</strong> Path to the input <code>.md</code> file.</td></tr>
+    <tr><td><code>--output</code></td><td><code>-o</code></td><td>Path to the output file.</td></tr>
+    <tr><td><code>--html</code></td><td></td><td>Wraps the output in a styled HTML boilerplate.</td></tr>
+    <tr><td><code>--pdf</code></td><td></td><td>Outputs markdown to PDF.</td></tr>
+    <tr><td><code>--live</code></td><td><code>-l</code></td><td>Watches input for changes and displays updates live in browser.</td></tr>
+    <tr><td><code>--port</code></td><td><code>-p</code></td><td>Port to serve the live preview on (default: 3000).</td></tr>
+    <tr><td><code>--help</code></td><td><code>-h</code></td><td>Displays help information.</td></tr>
+    <tr><td><code>--version</code></td><td><code>-V</code></td><td>Displays version information.</td></tr>
+    </tbody></table>
+    <h2>Author</h2>
+    <p>Aaron Glaza</p>
+    <h2>License</h2>
+    <p>This project is licensed under the MIT License.</p>
+    <script>
+        const eventSource = new EventSource('/reload');
+        eventSource.onmessage = (event) => {{
+            if (event.data === 'reload') {{
+                location.reload();
+            }}
+        }};
+    </script>
+</body>
+</html>

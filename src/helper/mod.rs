@@ -90,7 +90,7 @@ pub fn wrap_in_html_boilerplate(html_content: String) -> String {
                 location.reload();
             }}
         }};
-</script>
+    </script>
 </body>
 </html>"#,
         formatted_html

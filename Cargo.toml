@@ -2,6 +2,7 @@
 name = "mdc"
 version = "0.1.0"
 edition = "2024"
+authors = ["Aaron Glaza <akglaza@gmail.com.com>"]
 
 [dependencies]
 anyhow = "1.0.102"

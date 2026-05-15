@@ -5,7 +5,7 @@ use crate::OUTPUTS;
 
 #[derive(Parser, Debug)]
 #[command(
-    author = "Aaron Glaza",
+    author,
     version,
     about = "A simple Markdown to HTML converter",
     long_about = None
@@ -17,8 +17,8 @@ pub struct Args {
     pub output: Option<PathBuf>,
     #[arg(long, help = "Output HTML with boilerplate")]
     pub html: bool,
-    #[arg(short, long, help = "Watch the input file for changes and re-convert automatically")]
-    pub watch: bool,
+    #[arg(short, long, help = "Watch the input file for changes and display updates live in browser")]
+    pub live: bool,
 }
 
 

@@ -8,8 +8,9 @@ use axum::{
     routing::get, 
     Router
 };
-use clap::Parser;
+use clap::{Parser,CommandFactory};
 use notify::{recommended_watcher, Watcher, RecursiveMode, Event};
+use std::env;
 use tokio::signal;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
@@ -29,11 +30,17 @@ pub enum OUTPUTS {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    if env::args().len() == 1 {
+        Args::command().print_help()?;
+        println!();
+        return Ok(());
+    }
+
     let args = Args::parse();
-    let watch = args.watch;
+    let live = args.live;
     let input_path = helper::validate_input_file(&args.input)?;
 
-    if !watch {
+    if !live {
         let output_type = if args.output.is_some() {
             OUTPUTS::FILE
         } else {

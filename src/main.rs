@@ -37,6 +37,11 @@ async fn main() -> Result<()> {
     }
 
     let args = Args::parse();
+    
+    if args.port.is_some() && !args.live {
+        println!("WARNING: The --port flag is only used in --live mode and will be ignored.\n");
+    }
+
     let live = args.live;
     let input_path = helper::validate_input_file(&args.input)?;
 
@@ -48,14 +53,21 @@ async fn main() -> Result<()> {
         };
         let options = RenderOptions {
             boilerplate: args.html,
+            live: false,
             output: output_type
         };
         let output_path = args.output;
         let _ = helper::render(input_path, output_path, options);
     } else {
+        let port = args.port;
+        let port = match port {
+            Some(p) => p,
+            None => 3000,
+        };
+        let addr = format!("0.0.0.0:{}", port);
         let output_path = match args.output.as_ref() {
             Some(path) => path.clone(),
-            None => Path::new("_watch.html").to_path_buf(),
+            None => Path::new("__live__.html").to_path_buf(),
         };
 
         let is_temp_file = args.output.is_none();
@@ -63,6 +75,7 @@ async fn main() -> Result<()> {
 
         let options = RenderOptions {
             boilerplate: true,
+            live: true,
             output: OUTPUTS::FILE
         };
 
@@ -72,7 +85,6 @@ async fn main() -> Result<()> {
 
         helper::render(input_path.clone(), Some(output_path.clone()), options)?;
 
-        // 4. Setup File Watcher
         let watch_input = input_path.clone();
         let watch_output = output_path.clone();
 
@@ -80,11 +92,9 @@ async fn main() -> Result<()> {
             match res {
                 Ok(_) => {
                     println!("Change detected, re-rendering...");
-                    // Watcher handles the render and disk write
                     if let Err(e) = helper::render(watch_input.clone(), Some(watch_output.clone()), options) {
                         eprintln!("Watcher render error: {:?}", e);
                     }
-                    // Notify the browser to reload
                     let _ = tx_watcher.send(());
                 }
                 Err(e) => println!("Watcher error: {:?}", e),
@@ -97,7 +107,6 @@ async fn main() -> Result<()> {
 
         let app = Router::new()
             .route("/", get(move || async move {
-                // Server ONLY reads the file, it does not re-render
                 match tokio::fs::read_to_string(&server_output).await {
                     Ok(content) => axum::response::Html(content),
                     Err(_) => axum::response::Html("<h1>Error reading rendered file</h1>".to_string()),
@@ -110,8 +119,8 @@ async fn main() -> Result<()> {
                 Sse::new(stream)
             }));
 
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
-        println!("Watching {:?} and serving at http://127.0.0.1:3000", input_path);
+        let listener = tokio::net::TcpListener::bind(&addr).await?;
+        println!("Watching {:?} and serving at http://{}", input_path, addr);
         
         if let Err(e) = serve_with_cleanup(listener, app, is_temp_file, cleanup_path).await {
             eprintln!("Server error: {}", e);

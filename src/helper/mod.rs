@@ -20,10 +20,14 @@ pub fn convert_markdown_to_html(markdown: String) -> Result<String> {
 
 pub fn indent_html(html: String) -> String {
     let mut indented_content = String::with_capacity(html.len() * 2);
-    for line in html.lines() {
-        indented_content.push('\t');
+    let mut lines = html.lines().peekable();
+
+    while let Some(line) = lines.next() {
+        indented_content.push_str("    "); // Because spaces > tabs. Fight me!
         indented_content.push_str(line);
-        indented_content.push('\n');
+        if lines.peek().is_some() {
+            indented_content.push('\n');
+        }
     }
     indented_content
 }
@@ -37,7 +41,7 @@ pub fn render(input_path: PathBuf, output_path: Option<PathBuf>, options: Render
     let html_output = convert_markdown_to_html(input_markdown)?;
 
     let final_html = if options.boilerplate {
-        wrap_in_html_boilerplate(html_output)
+        wrap_in_html_boilerplate(html_output, options.live)
     } else {
         html_output
     };
@@ -67,7 +71,7 @@ pub fn validate_input_file(path: &Path) -> Result<PathBuf> {
     Ok(path.to_path_buf())
 }
 
-pub fn wrap_in_html_boilerplate(html_content: String) -> String {
+pub fn wrap_in_html_boilerplate(html_content: String, live: bool) -> String {
     let formatted_html = indent_html(html_content);
     format!(
         r#"<!DOCTYPE html>
@@ -82,18 +86,18 @@ pub fn wrap_in_html_boilerplate(html_content: String) -> String {
     </style>
 </head>
 <body>
-{}
-    <script>
+{}{}
+</body>
+</html>"#,
+        formatted_html,
+        if live { "\n    <script>
         const eventSource = new EventSource('/reload');
         eventSource.onmessage = (event) => {{
             if (event.data === 'reload') {{
                 location.reload();
             }}
         }};
-    </script>
-</body>
-</html>"#,
-        formatted_html
+    </script>".to_string() } else { "".to_string() }
     )
 }
 

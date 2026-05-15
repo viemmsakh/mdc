@@ -19,11 +19,14 @@ pub struct Args {
     pub html: bool,
     #[arg(short, long, help = "Watch the input file for changes and display updates live in browser")]
     pub live: bool,
+    #[arg(short, long, help = "Port to serve the live preview on (default: 3000)", value_name = "PORT")]
+    pub port: Option<u16>,
 }
 
 
 #[derive(Clone, Copy)]
 pub struct RenderOptions {
     pub boilerplate: bool,
+    pub live: bool,
     pub output: OUTPUTS,
 }

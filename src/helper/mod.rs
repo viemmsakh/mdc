@@ -55,7 +55,7 @@ pub fn render(input_path: PathBuf, output_path: Option<PathBuf>, options: Render
             }
         },
         OUTPUTS::STDOUT => {
-            write_html_to_stdout(final_html, false)?;
+            write_html_to_stdout(final_html)?;
         }
     }
     Ok(())
@@ -114,10 +114,7 @@ pub fn write_html_to_file(path: PathBuf, html_content: String) -> Result<()> {
     Ok(())
 }
 
-pub fn write_html_to_stdout(html_content: String, clear_screen: bool) -> Result<()> {
-    if clear_screen {
-        clearscreen::clear()?;
-    }
+pub fn write_html_to_stdout(html_content: String) -> Result<()> {
     println!("{}", html_content);
     Ok(())
 }

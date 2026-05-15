@@ -17,8 +17,6 @@ pub struct Args {
     pub output: Option<PathBuf>,
     #[arg(long, help = "Output HTML with boilerplate")]
     pub html: bool,
-    #[arg(short, long, help = "Force write the output file if it already exists")]
-    pub force: bool,
     #[arg(short, long, help = "Watch the input file for changes and re-convert automatically")]
     pub watch: bool,
 }

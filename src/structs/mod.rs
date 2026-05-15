@@ -1,0 +1,31 @@
+use clap::Parser;
+use std::path::PathBuf;
+
+use crate::OUTPUTS;
+
+#[derive(Parser, Debug)]
+#[command(
+    author = "Aaron Glaza",
+    version,
+    about = "A simple Markdown to HTML converter",
+    long_about = None
+)]
+pub struct Args {
+    #[arg(short, long, value_name = "FILE")]
+    pub input: PathBuf,
+    #[arg(short, long, value_name = "FILE")]
+    pub output: Option<PathBuf>,
+    #[arg(long, help = "Output HTML with boilerplate")]
+    pub html: bool,
+    #[arg(short, long, help = "Force write the output file if it already exists")]
+    pub force: bool,
+    #[arg(short, long, help = "Watch the input file for changes and re-convert automatically")]
+    pub watch: bool,
+}
+
+
+#[derive(Clone, Copy)]
+pub struct RenderOptions {
+    pub boilerplate: bool,
+    pub output: OUTPUTS,
+}
